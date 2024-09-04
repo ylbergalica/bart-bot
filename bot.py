@@ -1,18 +1,21 @@
 import discord
 import os
+import requests
+import google.generativeai as genai
 
 from discord.ext import commands
 from dotenv import load_dotenv
 
-import requests
-
 load_dotenv()
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="Bart ", intents=intents)
+bot = commands.Bot(command_prefix="bart ", intents=intents, case_insensitive=True)
 
 api_url = 'https://api.api-ninjas.com/v1/facts'
 
