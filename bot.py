@@ -1,15 +1,15 @@
 import discord
 import os
 import requests
-import google.generativeai as genai
+import openai
 
+from openai import AsyncOpenAI
 from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-1.5-flash")
+client = AsyncOpenAI(api_key = os.getenv('CHATGPT_API_KEY'))
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -18,6 +18,10 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="bart ", intents=intents, case_insensitive=True)
 
 api_url = 'https://api.api-ninjas.com/v1/facts'
+
+@bot.event
+async def on_ready():
+	print(f'{bot.user} has connected to Discord!')
 
 @bot.command()
 async def fact(ctx):
@@ -29,9 +33,29 @@ async def fact(ctx):
 		await ctx.reply("I am having a bit of a headache from your brainrot, please ask me again later..")
 		print("Error:", response.status_code, response.text)
 
-@bot.event
-async def on_ready():
-	print(f'{bot.user} has connected to Discord!')
+@bot.command()
+async def yo(ctx, *, message):
+	if message:
+		chat = await client.chat.completions.create(
+			messages=[
+				{
+					"role": "system",
+					"content": "You are a smart old man. You will find a counter argument for what the user says. Act like you DO NOT AGREE with the user, no matter how right the user is.",
+				},
+				{
+					"role": "user",
+					"content": message,
+				}
+			],
+			model="gpt-3.5-turbo",
+		)
+	else:
+		return await ctx.reply("The strongest argument is no argument, I accept defeat.")
+    
+	reply = chat.choices[0].message.content
+	print(f"ChatGPT: {reply}")
+
+	await ctx.reply(reply)
 
 @bot.event
 async def on_message(message):
