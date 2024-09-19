@@ -1,0 +1,51 @@
+function extractDecimalValues(str) {
+	return str.match(/\b\d+\.\d+(?=\s|$)/g); // take all decimal values until new line
+}
+
+function formatDecimals(str) {
+	const values = extractDecimalValues(str);
+
+	const formattedValues = values.map(value => {
+		return value.split('.')[1].length === 1 ? `${value}0` : value;
+	})
+
+	let formattedStr = str;
+	values.forEach((value, index) => {
+		formattedStr = formattedStr.replace(new RegExp(`\\b${value}\\b`, 'g'), formattedValues[index]);
+	});
+
+	return formattedStr;
+}
+
+function balance(book) {
+	const cleanedBook = book.replace(/[^\w.\s\n]/g, ''); // keep new lines
+	const decimalValues = extractDecimalValues(cleanedBook);
+
+	const currentBalance = parseFloat(decimalValues[0]).toFixed(2);
+	const costList = decimalValues.slice(1);
+
+	let updatedBalance = currentBalance;
+	const newBalances = costList.map(cost => {
+		updatedBalance -= cost;
+		return updatedBalance.toFixed(2);
+	});
+
+	const totalExpense = costList.reduce((accumulator, currentValue) => accumulator + parseFloat(currentValue), 0);
+	const averageExpense = totalExpense / costList.length;
+
+	const lines = cleanedBook.split('\n');
+	const transactionLines = lines.filter(line => line.trim() !== '').map(line => line.trim()).slice(1);
+
+	const cleanedTransactionLines = transactionLines.map((line, index) => `${line} Balance ${newBalances[index]}\r\n`)
+
+	let result = `Original Balance: ${currentBalance}\r\n`;
+
+	cleanedTransactionLines.forEach(line => {
+		result += line;
+	})
+
+	result += `Total expense  ${totalExpense.toFixed(2)}\r\n`;
+	result += `Average expense  ${averageExpense.toFixed(2)}`;
+
+	return formatDecimals(result);
+}
